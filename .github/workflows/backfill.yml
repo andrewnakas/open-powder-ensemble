@@ -1,0 +1,40 @@
+# Harvest the ensemble archive (GEFS 2020-, ECMWF ENS 2024-) from
+# dynamical.org for training: one job per league, each time-boxed and
+# resumable (finished units are assets of the `ens-store` release). The
+# keeper dispatches this daily; cron is a backup.
+name: Backfill ensemble archive
+
+on:
+  schedule:
+    - cron: "40 1 * * *"
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Time budget per league job"
+        default: "320"
+
+permissions:
+  contents: write
+
+env:
+  PYTHONUNBUFFERED: "1"
+
+concurrency:
+  group: backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        league: [stations, observers, alps, era5, resorts]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Backfill ${{ matrix.league }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ope backfill -l ${{ matrix.league }} --minutes ${{ inputs.minutes || '320' }}

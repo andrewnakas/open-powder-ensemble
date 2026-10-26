@@ -1,0 +1,82 @@
+# The submitter. GitHub cron is unreliable (runs start 30 min to 5 h late, and
+# under load whole hours are skipped), so one run of this workflow is a
+# *keeper*: it loops for ~5.5 h, checking every 8 min what is due (a round
+# just opened, a newer 00Z/12Z NWP cycle is in, or a submission never
+# merged), then dispatches its own successor. The cron entries only restart
+# the chain if it ever breaks; the concurrency group keeps one keeper alive.
+# Nothing is ever submitted within 45 min of a cutoff.
+name: Forecast & submit
+
+on:
+  schedule:
+    - cron: "7 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      once:
+        description: "Single pass instead of the long-running keeper loop"
+        type: boolean
+        default: false
+      league:
+        description: "Single pass: only this league (blank = every open round)"
+        default: ""
+      force:
+        description: "Single pass: resubmit even if nothing new (still deadline-guarded)"
+        type: boolean
+        default: false
+      dry_run:
+        description: "Single pass: build and validate only"
+        type: boolean
+        default: false
+
+concurrency:
+  group: forecast
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+
+env:
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      POWDERBENCH_TOKEN: ${{ secrets.POWDERBENCH_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Bot identity
+        run: |
+          git config user.name "open-powder-ensemble bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Keeper loop
+        if: ${{ !inputs.once }}
+        run: scripts/keeper.sh
+      - name: Single pass
+        if: ${{ inputs.once }}
+        run: |
+          gh release download models -D work/models -p '*.pkl' --clobber || echo "no trained models: tier 0"
+          ope run ${{ inputs.league && format('-l {0}', inputs.league) || '' }} \
+            ${{ inputs.force && '--force' || '' }} ${{ inputs.dry_run && '--dry-run' || '' }}
+      - name: Commit history (single pass)
+        if: ${{ always() && inputs.once && !inputs.dry_run }}
+        run: |
+          git add history
+          git diff --cached --quiet && exit 0
+          git commit -qm "history: $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3 4 5; do git pull -q --rebase && git push -q && exit 0; sleep $((i * 5)); done
+          exit 1
+      - name: Restart the chain if the keeper died early
+        if: ${{ failure() && !inputs.once }}
+        run: gh workflow run forecast.yml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forecasts-${{ github.run_id }}
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 30
