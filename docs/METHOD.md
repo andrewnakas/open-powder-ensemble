@@ -66,3 +66,15 @@ cut historical MAE the most.
 - It blends p50, and blends quantiles and P(≥6″) where the partner has them (WPC). Otherwise it
   rescales our quantiles.
 - Other competitors' submissions are never used.
+
+## Terrain
+Every station gets static terrain features from the Copernicus GLO-30 DEM (30 m), computed by
+`scripts/terrain.py` and stored in `data/terrain.parquet`. The method follows mountainweather/mtnwx.
+- **Local terrain:** relief within 10 km, slope, aspect, and topographic position (TPI) at 500 m,
+  2 km and 10 km.
+- **Height above the model grid:** the station's height above the mean terrain of a ~3 km cell
+  (HRRR) and of a 0.25° cell (GEFS/ECMWF/GFS). Coarse models report 2 m temperature at their
+  smoothed orography, so this offset explains much of their warm, rainy bias on mountain stations.
+
+DEM © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS
+by the European Union and ESA.
