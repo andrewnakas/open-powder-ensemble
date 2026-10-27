@@ -132,12 +132,13 @@ def run(
 def backfill(
     league: list[str] | None = LeaguesOpt,
     minutes: float = typer.Option(320, help="Time budget"),
+    dataset: list[str] | None = typer.Option(None, "--dataset", "-d", help="Only these dynamical datasets"),
 ):
     """Harvest the next ensemble-archive units from dynamical.org (resumable)."""
     from . import ens_backfill, store
 
     store.pull("ens-store", ens_backfill.ENS_STORE)
-    res = ens_backfill.run(league or ["stations", "observers", "alps", "era5", "resorts"], minutes)
+    res = ens_backfill.run(league or ["stations", "observers", "alps", "era5", "resorts"], minutes, datasets=dataset)
     _summary(f"ens backfill: {res}")
 
 

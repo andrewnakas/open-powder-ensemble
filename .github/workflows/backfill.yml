@@ -29,12 +29,18 @@ jobs:
     timeout-minutes: 350
     strategy:
       fail-fast: false
+      max-parallel: 20
       matrix:
         league: [stations, observers, alps, era5, resorts]
+        dataset: [gefs, ecens, gfs, hrrr, aifs, aifsens]
+        exclude:  # HRRR is CONUS-only
+          - {league: alps, dataset: hrrr}
+          - {league: era5, dataset: hrrr}
+          - {league: resorts, dataset: hrrr}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      - name: Backfill ${{ matrix.league }}
+      - name: Backfill ${{ matrix.league }} / ${{ matrix.dataset }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: ope backfill -l ${{ matrix.league }} --minutes ${{ inputs.minutes || '320' }}
+        run: ope backfill -l ${{ matrix.league }} -d ${{ matrix.dataset }} --minutes ${{ inputs.minutes || '320' }}

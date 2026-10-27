@@ -82,11 +82,12 @@ def harvest_unit(ds: str, league: str, month: pd.Period, deadline: float) -> pd.
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
-def run(leagues: list[str], minutes: float = 300, end: date | None = None) -> dict:
+def run(leagues: list[str], minutes: float = 300, end: date | None = None,
+        datasets: list[str] | None = None) -> dict:
     end = end or (pd.Timestamp.utcnow() - pd.Timedelta(days=5)).date()
     deadline = time.time() + minutes * 60
     have = {p.name for p in ENS_STORE.glob("*.parquet")} | store.remote_assets("ens-store")
-    todo = [u for u in units(leagues, end) if unit_name(*u) not in have]
+    todo = [u for u in units(leagues, end) if unit_name(*u) not in have and (not datasets or u[0] in datasets)]
     print(f"ens backfill: {len(todo)} units to go, {minutes:.0f} min budget", flush=True)
     done = []
     for ds, lg, m in todo:
