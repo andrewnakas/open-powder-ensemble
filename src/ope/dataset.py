@@ -71,6 +71,7 @@ def training_table(league: str) -> pd.DataFrame:
     df = X.merge(tw, on=KEYS, how="inner")
     df["league"] = league
     df["season"] = season_of(df["round_date"], league)
+    df["featured"] = df["station_id"].map(stations(league)["featured"]).fillna(False).astype(int)
     return df
 
 
