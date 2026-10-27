@@ -25,6 +25,7 @@ dependencies = [
     "aiohttp>=3.9",
     "timezonefinder>=6.5",
     "scipy>=1.11",
+    "icechunk>=1.0",
 ]
 
 [project.optional-dependencies]

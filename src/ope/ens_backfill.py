@@ -18,7 +18,7 @@ import pandas as pd
 from . import WORK, store
 from .contract import stations
 from .ens_features import features_for_init
-from .sources.dynamical import DATASETS
+from .sources.dynamical import DATASETS, applies
 
 ENS_STORE = WORK / "ens_store"
 NH_MONTHS = (11, 12, 1, 2, 3, 4)
@@ -52,6 +52,8 @@ def units(leagues: list[str], end: date) -> list[tuple[str, str, pd.Period]]:
     leagues = list(leagues) + [lg + NET for lg in leagues if lg in NETWORK_SAMPLE]
     for ds, spec in DATASETS.items():
         for lg in leagues:
+            if not applies(ds, lg.removesuffix(NET)):
+                continue
             months = SH_MONTHS if lg in ("era5", "resorts") else NH_MONTHS
             # resort leagues only have truth since PowderBench's rounds began
             first = "2026-06-01" if lg in ("resorts", "resorts-na") else spec.first_init
@@ -67,7 +69,8 @@ def units(leagues: list[str], end: date) -> list[tuple[str, str, pd.Period]]:
 def harvest_unit(ds: str, league: str, month: pd.Period, deadline: float) -> pd.DataFrame | None:
     st = unit_stations(league)
     league = league.removesuffix(NET)
-    inits = pd.date_range(month.start_time, month.end_time.normalize(), freq=f"{EVERY_N_DAYS}D")
+    hour = pd.Timedelta(hours=DATASETS[ds].init_hour)
+    inits = pd.date_range(month.start_time, month.end_time.normalize(), freq=f"{EVERY_N_DAYS}D") + hour
     frames = []
     for init in inits:
         if time.time() > deadline:

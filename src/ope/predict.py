@@ -59,16 +59,20 @@ class Result:
 def live_ensembles(r: Round, st: pd.DataFrame, info: dict) -> pd.DataFrame:
     """Both ensembles at every station; the init a cutoff-time forecast can
     use (or the newest earlier one, if publication runs late)."""
-    want = init_for_round(r.round_date, r.league)
     frames = []
     for name in dynamical.DATASETS:
+        if not dynamical.applies(name, r.league):
+            continue
+        want = init_for_round(r.round_date, r.league, name)
         try:
             inits = dynamical.available_inits(name)
-            ok = inits[inits <= want]
+            ok = inits[(inits <= want) & (inits.hour == want.hour)]
             if not len(ok):
                 continue
             init = ok[-1]
             f = features_for_init(name, init, st, r.league, round_date=r.round_date)
+            if f.empty:
+                continue
             frames.append(f.set_index(KEYS))
             info[f"{name}_init"] = str(init)[:13]
             print(f"  {r.key}: {name} {str(init)[:13]}Z at {len(st)} stations", flush=True)

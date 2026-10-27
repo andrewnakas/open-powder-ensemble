@@ -58,7 +58,7 @@ _Updated 2026-10-27 00:57 UTC from PowderBench leaderboards._
 
 | | open-powder-ml | **open-powder-ensemble** |
 |---|---|---|
-| Inputs | 10 deterministic NWP models (Open-Meteo) | the same, **plus GEFS (31 members) and ECMWF ENS (51 members)** from [dynamical.org](https://dynamical.org) |
+| Inputs | 10 deterministic NWP models (Open-Meteo) | the same, **plus six lead-correct archives from [dynamical.org](https://dynamical.org)**: GEFS (31 members, 2020–), ECMWF ENS (51, 2024–), GFS (2021–), **HRRR 3 km with its own snowfall** (2018–), ECMWF **AIFS** (AI, 2024–) and **AIFS ENS** (51, 2025–) |
 | Network stations | 2 models, quota-limited, partial | ensembles at **every** station (no API quota) |
 | Snow physics | 2 m temperature rain/snow split and snow ratio | GEFS percent-frozen; **wet-bulb** rain/snow split and **850 hPa** snow ratio for ECMWF |
 | Uncertainty | quantile GBM on model spread | quantile GBM on **82-member** predictive distributions, P(≥6″) from members |

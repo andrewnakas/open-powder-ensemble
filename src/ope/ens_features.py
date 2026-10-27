@@ -55,10 +55,12 @@ def slr_850(t850: np.ndarray) -> np.ndarray:
 
 def member_snow(df: pd.DataFrame, name: str) -> pd.DataFrame:
     """Adds liquid (mm), frozen fraction, snow depth (mm) and the temperature
-    that drives the ratio, per 3 h step."""
+    that drives the ratio, per step (`dt_h` hours long)."""
+    from .sources.dynamical import DATASETS
+
     p = df["p"].fillna(0.0).clip(lower=0).to_numpy()
     t2 = df["t2m"].to_numpy()
-    if name == "gefs":
+    if DATASETS[name].physics == "frozen":
         fz = df["pfz"].to_numpy() / 100.0
         fz = np.where(np.isfinite(fz), fz, 1.0 / (1.0 + np.exp((t2 - 1.0) / 0.5)))
         ratio, tdrv = slr_2m(np.nan_to_num(t2)), t2
@@ -68,21 +70,26 @@ def member_snow(df: pd.DataFrame, name: str) -> pd.DataFrame:
         t850 = df["t850"].to_numpy()
         ratio, tdrv = slr_850(np.nan_to_num(t850)), t850
     fz = np.clip(np.nan_to_num(fz), 0, 1)
-    out = df[["station_id", "member", "valid"]].copy()
+    out = df[["station_id", "member", "valid", "dt_h"]].copy()
     out["liq"], out["frz"], out["snow"], out["tdrv"] = p, p * fz, p * fz * ratio, np.nan_to_num(tdrv) * p
+    # the model's own snowfall (HRRR), mm of snow
+    out["nsnow"] = df["nsnow"].clip(lower=0).to_numpy() if "nsnow" in df else np.nan
     return out
 
 
 def local_days(steps: pd.DataFrame, tz: pd.Series) -> pd.DataFrame:
-    """Sum 3 h steps into station-local calendar days (by step midpoint)."""
-    mid = pd.to_datetime(steps["valid"]) - pd.Timedelta(minutes=90)
+    """Sum steps into station-local calendar days (by step midpoint); keep
+    days the run covers completely (>= 23 h of steps)."""
+    mid = pd.to_datetime(steps["valid"]) - pd.to_timedelta(steps["dt_h"] / 2, unit="h")
     dates = np.empty(len(steps), dtype=object)
     for zone, idx in steps.groupby(steps["station_id"].map(tz)).groups.items():
         dates[steps.index.get_indexer(idx)] = mid.loc[idx].dt.tz_localize("UTC").dt.tz_convert(zone).dt.date.to_numpy()
     steps = steps.assign(date=dates)
-    d = steps.groupby(["station_id", "member", "date"], sort=False)[["liq", "frz", "snow", "tdrv"]].sum()
-    d["n"] = steps.groupby(["station_id", "member", "date"], sort=False).size()
-    return d[d["n"] >= 8].drop(columns="n").reset_index()  # a whole local day (8 x 3 h)
+    g = steps.groupby(["station_id", "member", "date"], sort=False)
+    d = g[["liq", "frz", "snow", "tdrv"]].sum()
+    d["nsnow"] = g["nsnow"].sum(min_count=1)
+    d["hrs"] = g["dt_h"].sum()
+    return d[d["hrs"] >= 23].drop(columns="hrs").reset_index()
 
 
 def round_features(days: pd.DataFrame, round_of: pd.Series, prefix: str) -> pd.DataFrame:
@@ -97,6 +104,7 @@ def round_features(days: pd.DataFrame, round_of: pd.Series, prefix: str) -> pd.D
         w = days[(days["i"] >= 0) & (days["i"] < n)]
         g = w.groupby(["station_id", "round_date", "member"])
         m = g[["liq", "frz", "snow", "tdrv"]].sum()
+        m["nsnow"] = g["nsnow"].sum(min_count=n)
         m = m[g.size() == n]  # every day of the window present
         m["snow_in"] = m["snow"] / MM_PER_IN
         m["liq_in"] = m["liq"] / MM_PER_IN
@@ -111,7 +119,12 @@ def round_features(days: pd.DataFrame, round_of: pd.Series, prefix: str) -> pd.D
             "frz_frac": s["frz"].sum() / s["liq"].sum().clip(lower=0.1),
             "t_wet": s["tdrv"].sum() / s["liq"].sum().clip(lower=0.1),
             "n_mem": s.size(),
+            "native_snow": s["nsnow"].mean() / MM_PER_IN,
         })
+        if f["native_snow"].isna().all():
+            f = f.drop(columns="native_snow")
+        if f["n_mem"].max() == 1:  # deterministic run: quantiles and spreads say nothing
+            f = f[["snow_mean", "liq_mean", "frz_frac", "t_wet", *(["native_snow"] if "native_snow" in f else [])]]
         f.columns = [f"{prefix}_{c}" for c in f.columns]
         f["horizon_h"] = h
         rows.append(f.reset_index())
@@ -120,14 +133,16 @@ def round_features(days: pd.DataFrame, round_of: pd.Series, prefix: str) -> pd.D
     return out
 
 
-def init_for_round(round_date: date, league: str) -> pd.Timestamp:
-    """The 00Z run a forecast made at this league's cutoff can use: published
+def init_for_round(round_date: date, league: str, name: str = "gefs") -> pd.Timestamp:
+    """The run a forecast made at this league's cutoff can use, published
     (~10 h after init on dynamical.org) at least an hour before the cutoff.
-    NH leagues (cutoff 00Z D / 21Z D-1): D-1 00Z. SH leagues (11Z D-1): D-2 00Z."""
+    00Z datasets: NH leagues (cutoff 00Z D / 21Z D-1) D-1 00Z; SH leagues
+    (11Z D-1) D-2 00Z. HRRR's 48 h runs: D-1 12Z, covering local day D."""
     from .dataset import SH_LEAGUES
+    from .sources.dynamical import DATASETS
 
     back = 2 if league in SH_LEAGUES else 1
-    return pd.Timestamp(round_date) - pd.Timedelta(days=back)
+    return pd.Timestamp(round_date) - pd.Timedelta(days=back) + pd.Timedelta(hours=DATASETS[name].init_hour)
 
 
 def features_for_init(name: str, init: pd.Timestamp, st: pd.DataFrame, league: str,
@@ -137,8 +152,11 @@ def features_for_init(name: str, init: pd.Timestamp, st: pd.DataFrame, league: s
     older run stands in for a late one (the windows must be the round's days)."""
     from .sources.dynamical import extract
 
-    steps = member_snow(extract(name, init, st), name)
+    raw = extract(name, init, st)
+    if raw.empty:
+        return pd.DataFrame()
+    steps = member_snow(raw, name)
     days = local_days(steps.reset_index(drop=True), station_tz(st))
     back = 2 if league in ("era5", "resorts") else 1
-    rd = round_date or (init + pd.Timedelta(days=back)).date()
+    rd = round_date or (pd.Timestamp(init).normalize() + pd.Timedelta(days=back)).date()
     return round_features(days, pd.Series(rd, index=st.index), name)

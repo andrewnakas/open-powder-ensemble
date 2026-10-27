@@ -4,6 +4,17 @@ The targets, the scoring and the deterministic features are as in
 [open-powder-ml](https://github.com/andrewnakas/open-powder-ml/blob/main/docs/METHOD.md). This
 entry adds the following.
 
+## Forecast archives (dynamical.org, CC BY 4.0)
+- **Ensembles:** GEFS (31 members, 00Z, from 2020-10), ECMWF IFS ENS (51, from 2024-04) and
+  ECMWF AIFS ENS (51, the AI ensemble, from 2025-07).
+- **Single runs:** GFS (from 2021-05), ECMWF AIFS (from 2024-04) and HRRR.
+- **HRRR:** the 3 km CONUS model, from 2018. It uses the 12Z D−1 runs; their 48 h reach covers
+  local day D, so HRRR feeds the 24 h horizon only. It includes HRRR's own snowfall field.
+
+Every archive is lead-correct: training rows use exactly the run a cutoff-time forecast could
+have used. Deterministic runs contribute mean snow, liquid, frozen fraction and temperature
+(their quantiles would say nothing).
+
 ## Ensemble features
 For each round D, the forecast uses the 00Z run that a forecast made at the league's cutoff could
 use:
