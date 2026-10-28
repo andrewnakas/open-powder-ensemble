@@ -171,7 +171,7 @@ def train(
              f"{len(b.features)} features, rounds {b.rounds}")
     _summary("held-out: " + json.dumps({k: v for k, v in b.metrics.items() if k not in ("ref_snow_p99", "cv")}))
     if b.metrics.get("cv"):
-        _summary("season CV (Powder Score; raw ensemble+model consensus as the baseline): " + "; ".join(
+        _summary("season CV (Powder Accuracy; raw ensemble+model consensus as the baseline): " + "; ".join(
             f"{r['label']} {r['powder_score']} vs raw {r['raw_consensus']} (folds {r['folds']})"
             for r in b.metrics["cv"]["all"]))
     cand = store.MODELS / f"{bundle}.candidate.pkl"
@@ -191,7 +191,7 @@ def _better(new: dict, old: dict) -> bool:
 
     With season CV (3+ seasons): the candidate was tuned against the
     champion's own settings on the same folds and retrained on more data, so
-    it is promoted if its CV Powder Score beats the raw multi-model consensus
+    it is promoted if its CV Powder Accuracy beats the raw multi-model consensus
     by 2+ points and isn't worse than the champion's settings re-scored on the
     same folds by > 0.5 point.
 
