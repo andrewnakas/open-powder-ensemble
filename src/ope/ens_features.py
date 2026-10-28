@@ -133,16 +133,31 @@ def round_features(days: pd.DataFrame, round_of: pd.Series, prefix: str) -> pd.D
     return out
 
 
+DATA_MARGIN_H = 2.0  # the run must be published this long before the cutoff
+
+
 def init_for_round(round_date: date, league: str, name: str = "gefs") -> pd.Timestamp:
-    """The run a forecast made at this league's cutoff can use, published
-    (~10 h after init on dynamical.org) at least an hour before the cutoff.
-    00Z datasets: NH leagues (cutoff 00Z D / 21Z D-1) D-1 00Z; SH leagues
-    (11Z D-1) D-2 00Z. HRRR's 48 h runs: D-1 12Z, covering local day D."""
-    from .dataset import SH_LEAGUES
+    """The freshest run of `name` that a forecast made at this league's cutoff
+    can use: published (init + the dataset's conservative delay) at least
+    DATA_MARGIN_H hours before the cutoff. Training and live use this same
+    rule, so features always have the lead time they will have live."""
+    from . import use_pb_data
+
+    use_pb_data()
+    from powderbench.leagues import get_league
+
     from .sources.dynamical import DATASETS
 
-    back = 2 if league in SH_LEAGUES else 1
-    return pd.Timestamp(round_date) - pd.Timedelta(days=back) + pd.Timedelta(hours=DATASETS[name].init_hour)
+    spec = DATASETS[name]
+    cutoff = pd.Timestamp(get_league(league).cutoff_utc(round_date)).tz_localize(None)
+    latest = cutoff - pd.Timedelta(hours=DATA_MARGIN_H + spec.latency_h)
+    day = latest.normalize()
+    for back in range(0, 3):
+        for h in sorted(spec.init_hours, reverse=True):
+            t = day - pd.Timedelta(days=back) + pd.Timedelta(hours=h)
+            if t <= latest:
+                return t
+    return day - pd.Timedelta(days=3)
 
 
 def features_for_init(name: str, init: pd.Timestamp, st: pd.DataFrame, league: str,
@@ -157,6 +172,6 @@ def features_for_init(name: str, init: pd.Timestamp, st: pd.DataFrame, league: s
         return pd.DataFrame()
     steps = member_snow(raw, name)
     days = local_days(steps.reset_index(drop=True), station_tz(st))
-    back = 2 if league in ("era5", "resorts") else 1
-    rd = round_date or (pd.Timestamp(init).normalize() + pd.Timedelta(days=back)).date()
-    return round_features(days, pd.Series(rd, index=st.index), name)
+    if round_date is None:
+        raise ValueError("round_date is required (the run-to-round mapping depends on the league's cutoff)")
+    return round_features(days, pd.Series(round_date, index=st.index), name)

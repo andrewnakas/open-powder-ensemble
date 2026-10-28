@@ -5,13 +5,17 @@
 | gefs    | NOAA GEFS                 | 31      | 00Z              | 2020-10      | 0.25 deg        |
 | ecens   | ECMWF IFS ENS             | 51      | 00Z              | 2024-04      | 0.25 deg        |
 | gfs     | NOAA GFS                  | 1       | 00Z              | 2021-05      | 0.25 deg        |
-| hrrr    | NOAA HRRR (CONUS, 3 km)   | 1       | 12Z (48 h runs)  | 2018-07      | Lambert y/x     |
+| hrrr    | NOAA HRRR (CONUS, 3 km)   | 1       | 6-hourly, 48 h   | 2018-07      | Lambert y/x     |
 | aifs    | ECMWF AIFS (AI)           | 1       | 00Z              | 2024-04      | 0.25 deg        |
 | aifsens | ECMWF AIFS ENS (AI)       | 51      | 00Z              | 2025-07      | 0.25 deg        |
 
 The Zarr / Icechunk stores are sharded on object storage (the newer ones on
 AWS Open Data buckets), and only the inner chunks around the requested
 stations are read. No API quota.
+
+Run selection (training and live alike): the newest run whose conservative
+publication delay (`latency_h`) lands it 2 h before the league's cutoff,
+e.g. GFS/AIFS 12Z D-1 and HRRR 18Z D-1 for a 00Z D cutoff.
 
 Precipitation is a mean rate over the step ending at each lead, so per-step
 amounts are rate x step length; step lengths come from the lead spacing
@@ -37,8 +41,10 @@ class Dataset:
     physics: str  # "frozen" (percent-frozen + 2 m T) | "upper" (wet-bulb + 850 hPa T)
     url: str | None = None  # plain Zarr
     icechunk: tuple[str, str] | None = None  # (bucket, prefix) on AWS us-west-2
-    init_hour: int = 0
-    max_lead_h: int = 132
+    init_hours: tuple[int, ...] = (0,)  # runs the archive holds
+    latency_h: float = 10.0  # conservative: init -> published on dynamical.org
+    tag: str = ""  # bumped when the run-selection rule changes (re-harvest)
+    max_lead_h: int = 156
     conus_only: bool = False
     leagues: tuple[str, ...] = field(default=())  # () = every league
 
@@ -55,20 +61,24 @@ DATASETS = {
     "gfs": Dataset(
         "gfs", {"precipitation_surface": "p", "temperature_2m": "t2m",
                 "percent_frozen_precipitation_surface": "pfz"},
-        "2021-05-01", "frozen", icechunk=("dynamical-noaa-gfs", "noaa-gfs-forecast/v0.2.7.icechunk")),
+        "2021-05-01", "frozen", icechunk=("dynamical-noaa-gfs", "noaa-gfs-forecast/v0.2.7.icechunk"),
+        init_hours=(0, 6, 12, 18), latency_h=7, tag="f"),
     "hrrr": Dataset(
         "hrrr", {"precipitation_surface": "p", "temperature_2m": "t2m",
                  "percent_frozen_precipitation_surface": "pfz", "snowfall_surface": "nsnow"},
         "2018-08-01", "frozen", icechunk=("dynamical-noaa-hrrr", "noaa-hrrr-forecast-48-hour/v0.1.0.icechunk"),
-        init_hour=12, max_lead_h=48, conus_only=True, leagues=("stations", "observers", "resorts-na")),
+        init_hours=(0, 6, 12, 18), latency_h=3, tag="f", max_lead_h=48, conus_only=True,
+        leagues=("stations", "observers", "resorts-na")),
     "aifs": Dataset(
         "aifs", {"precipitation_surface": "p", "temperature_2m": "t2m",
                  "dew_point_temperature_2m": "td", "temperature_850hpa": "t850"},
-        "2024-04-01", "upper", icechunk=("dynamical-ecmwf-aifs-single", "ecmwf-aifs-single-forecast/v0.1.0.icechunk")),
+        "2024-04-01", "upper", icechunk=("dynamical-ecmwf-aifs-single", "ecmwf-aifs-single-forecast/v0.1.0.icechunk"),
+        init_hours=(0, 6, 12, 18), latency_h=7, tag="f"),
     "aifsens": Dataset(
         "aifsens", {"precipitation_surface": "p", "temperature_2m": "t2m",
                     "dew_point_temperature_2m": "td", "temperature_850hpa": "t850"},
-        "2025-07-01", "upper", icechunk=("dynamical-ecmwf-aifs-ens", "ecmwf-aifs-ens-forecast/v0.1.0.icechunk")),
+        "2025-07-01", "upper", icechunk=("dynamical-ecmwf-aifs-ens", "ecmwf-aifs-ens-forecast/v0.1.0.icechunk"),
+        init_hours=(0, 6, 12, 18), latency_h=7, tag="f"),
 }
 
 

@@ -66,7 +66,7 @@ def live_ensembles(r: Round, st: pd.DataFrame, info: dict) -> pd.DataFrame:
         want = init_for_round(r.round_date, r.league, name)
         try:
             inits = dynamical.available_inits(name)
-            ok = inits[(inits <= want) & (inits.hour == want.hour)]
+            ok = inits[inits <= want]  # the rule's run, or the newest earlier one if it's late
             if not len(ok):
                 continue
             init = ok[-1]

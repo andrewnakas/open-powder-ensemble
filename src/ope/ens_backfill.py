@@ -17,7 +17,7 @@ import pandas as pd
 
 from . import WORK, store
 from .contract import stations
-from .ens_features import features_for_init
+from .ens_features import features_for_init, init_for_round
 from .sources.dynamical import DATASETS, applies
 
 ENS_STORE = WORK / "ens_store"
@@ -34,7 +34,7 @@ NET = "-net"
 
 
 def unit_name(ds: str, league: str, month: pd.Period) -> str:
-    return f"ens__{ds}__{league}__{month}.parquet"
+    return f"ens__{ds}{DATASETS[ds].tag}__{league}__{month}.parquet"
 
 
 def unit_stations(league: str) -> pd.DataFrame:
@@ -69,14 +69,13 @@ def units(leagues: list[str], end: date) -> list[tuple[str, str, pd.Period]]:
 def harvest_unit(ds: str, league: str, month: pd.Period, deadline: float) -> pd.DataFrame | None:
     st = unit_stations(league)
     league = league.removesuffix(NET)
-    hour = pd.Timedelta(hours=DATASETS[ds].init_hour)
-    inits = pd.date_range(month.start_time, month.end_time.normalize(), freq=f"{EVERY_N_DAYS}D") + hour
+    rounds = pd.date_range(month.start_time, month.end_time.normalize(), freq=f"{EVERY_N_DAYS}D").date
     frames = []
-    for init in inits:
+    for rd in rounds:
         if time.time() > deadline:
             return None  # unfinished: redo next run (units are atomic)
         try:
-            frames.append(features_for_init(ds, init, st, league))
+            frames.append(features_for_init(ds, init_for_round(rd, league, ds), st, league, round_date=rd))
         except KeyError:  # run missing from the archive
             continue
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
@@ -112,8 +111,9 @@ def load(league: str) -> pd.DataFrame:
     keys = ["station_id", "round_date", "horizon_h"]
     out = None
     for ds in DATASETS:
-        files = (sorted(ENS_STORE.glob(f"ens__{ds}__{league}__*.parquet"))
-                 + sorted(ENS_STORE.glob(f"ens__{ds}__{league}{NET}__*.parquet")))
+        tag = f"{ds}{DATASETS[ds].tag}"
+        files = (sorted(ENS_STORE.glob(f"ens__{tag}__{league}__*.parquet"))
+                 + sorted(ENS_STORE.glob(f"ens__{tag}__{league}{NET}__*.parquet")))
         if not files:
             continue
         f = pd.concat([pd.read_parquet(x) for x in files], ignore_index=True)
