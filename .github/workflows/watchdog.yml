@@ -22,7 +22,7 @@ jobs:
       - name: Champion models
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release download models -D work/models -p '*.pkl' || echo "no models yet"
+        run: python -c "from ope import store; store.pull('models', store.MODELS, '*.pkl')" || echo "no models yet"
       - name: Check open rounds
         id: check
         env:
