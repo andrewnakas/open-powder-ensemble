@@ -100,9 +100,9 @@ def run(leagues: list[str], minutes: float = 300, end: date | None = None,
         df.to_parquet(p, index=False)
         done.append(p)
         print(f"  {p.name}: {len(df)} rows in {time.time() - t0:.0f}s", flush=True)
-        if len(done) % 5 == 0:  # don't lose work if the job dies
-            store.push("ens-store", done[-5:])
-    store.push("ens-store", done[-(len(done) % 5 or 5):] if done else [])
+        if len(done) % 10 == 0:  # don't lose work if the job dies (fewer, bigger uploads: API limits)
+            store.push("ens-store", done[-10:])
+    store.push("ens-store", done[-(len(done) % 10 or 10):] if done else [])
     return {"done": len(done), "remaining": len(todo) - len(done)}
 
 

@@ -108,3 +108,16 @@ def test_due_initial_update_and_guard(monkeypatch, tmp_path):
     assert [a.reason for a in schedule.due(now, on_upstream=lambda r: False)] == ["resubmit"]
     # inside the guard window nothing happens
     assert schedule.due(datetime(2026, 1, 10, 23, 30, tzinfo=timezone.utc)) == []
+
+
+def test_plausibility_cap_kills_invented_storms():
+    from ope.predict import plausibility_cap
+
+    X = pd.DataFrame({"station_id": ["la-hoya", "storm"], "horizon_h": [24, 24],
+                      "slr__m1": [0.0, 10.0], "slr__m2": [0.0, 12.0]})
+    pred = pd.DataFrame({"station_id": ["la-hoya", "storm"], "horizon_h": [24, 24], "snowfall_in": [13.8, 14.0],
+                         **{q: [13.8, 14.0] for q in QCOLS}, "prob_6in": [0.7, 0.8]})
+    out = plausibility_cap(pred, X, ["slr__m1", "slr__m2"]).set_index("station_id")
+    assert out.loc["la-hoya", "snowfall_in"] == pytest.approx(0.5)  # every model dry: no storm
+    assert out.loc["la-hoya", "prob_6in"] <= 0.02
+    assert out.loc["storm", "snowfall_in"] == 14.0  # a real storm is untouched

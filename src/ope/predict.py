@@ -98,6 +98,36 @@ def live_deterministic(r: Round, st: pd.DataFrame, info: dict) -> pd.DataFrame:
     return daily(h)
 
 
+CAP_MULT, CAP_ADD = 2.5, 0.5  # physical plausibility: never far above the snowiest model
+
+
+def plausibility_cap(pred: pd.DataFrame, X: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
+    """A statistical model must not invent a storm no weather model sees (a
+    resorts model once forecast 10-14" at La Hoya with every model at 0).
+    Each row is capped at CAP_MULT x the snowiest input + CAP_ADD inches, and
+    P(>=6") is held near zero when even that cap is under 6"."""
+    use = [c for c in cols if c in X]
+    if not use or pred.empty:
+        return pred
+    top = X[use].max(axis=1, skipna=True)
+    keys = pd.MultiIndex.from_frame(X[["station_id", "horizon_h"]])
+    cap = pd.Series((CAP_MULT * top + CAP_ADD).to_numpy(), index=keys)
+    cap = cap[~cap.index.duplicated()]
+    c = cap.reindex(pd.MultiIndex.from_frame(pred[["station_id", "horizon_h"]])).to_numpy()
+    out = pred.copy()
+    ok = ~np.isnan(c)
+    for q in (*QCOLS, "snowfall_in"):
+        if q in out:
+            out.loc[ok, q] = np.minimum(out.loc[ok, q].to_numpy(), c[ok])
+    if "prob_6in" in out:
+        low = ok & (c < 6.0)
+        out.loc[low, "prob_6in"] = np.minimum(out.loc[low, "prob_6in"].fillna(0).to_numpy(), 0.02)
+    n = int((ok & (pred["snowfall_in"].to_numpy() > np.nan_to_num(c, nan=np.inf))).sum())
+    if n:
+        print(f"  plausibility cap trimmed {n} rows", flush=True)
+    return out
+
+
 def _with_density(pred: pd.DataFrame, X: pd.DataFrame) -> pd.DataFrame:
     """New-snow density (water / depth) from the forecast physics: each
     ensemble's frozen water over its snow depth (members' wet-bulb / 850 hPa
@@ -160,6 +190,9 @@ def build(r: Round, network: bool = True, budget: float | None = None) -> Result
     t0["tier"] = "t0"
     parts = [_tier1(X, proxy, bundle)] if bundle is not None and len(ens) else []
     pred = pd.concat([*parts, t0], ignore_index=True).drop_duplicates(["station_id", "horizon_h"], keep="first")
+    tops = [c for c in X.columns if c.endswith(("_snow_q90", "_snow_mean", "_native_snow"))
+            or c.startswith(("slr__", "snow__"))]
+    pred = plausibility_cap(pred, X, tops)
     pred = _with_density(pred, X)
     pred["raw_in"] = pred["snowfall_in"]
     pred = online.apply(pred, r.league, r.round_date)
