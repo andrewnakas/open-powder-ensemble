@@ -11,7 +11,7 @@ on:
     inputs:
       minutes:
         description: "Time budget per league job"
-        default: "320"
+        default: "240"
 
 permissions:
   contents: write
@@ -43,4 +43,4 @@ jobs:
       - name: Backfill ${{ matrix.league }} / ${{ matrix.dataset }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: ope backfill -l ${{ matrix.league }} -d ${{ matrix.dataset }} --minutes ${{ inputs.minutes || '320' }}
+        run: ope backfill -l ${{ matrix.league }} -d ${{ matrix.dataset }} --minutes ${{ inputs.minutes || '240' }}
