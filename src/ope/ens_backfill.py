@@ -21,8 +21,10 @@ from .ens_features import features_for_init, init_for_round
 from .sources.dynamical import DATASETS, applies
 
 ENS_STORE = WORK / "ens_store"
-NH_MONTHS = (11, 12, 1, 2, 3, 4)
-SH_MONTHS = (6, 7, 8, 9)
+# the shoulder months matter: rounds run Oct-May (NH) and May-Oct (SH), and
+# early/late-season rain-snow transitions and bare ground behave differently
+NH_MONTHS = (10, 11, 12, 1, 2, 3, 4, 5)
+SH_MONTHS = (5, 6, 7, 8, 9, 10)
 EVERY_N_DAYS = 2
 
 
@@ -61,7 +63,7 @@ def units(leagues: list[str], end: date) -> list[tuple[str, str, pd.Period]]:
                 if m.month in months and m.end_time.date() <= end:
                     out.append((ds, lg, m))
     # winter core first, newest season first
-    core = {1: 0, 2: 0, 12: 0, 7: 0, 8: 0, 3: 1, 11: 1, 6: 1, 9: 1, 4: 2}
+    core = {1: 0, 2: 0, 12: 0, 7: 0, 8: 0, 3: 1, 11: 1, 6: 1, 9: 1, 4: 2, 10: 2, 5: 2}
     # featured first, then the network samples
     return sorted(out, key=lambda u: (u[1].endswith(NET), core.get(u[2].month, 3), -u[2].year, u[0], u[1]))
 
