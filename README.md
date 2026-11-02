@@ -17,53 +17,53 @@ baseline this entry builds on.
 ## Standing
 
 <!-- scoreboard:start -->
-_Updated 2026-11-01 00:30 UTC from PowderBench leaderboards._
+_Updated 2026-11-02 01:05 UTC from PowderBench leaderboards._
 
 ### era5 — not entered yet
 
 | # | team | Powder Accuracy | MAE | pinball | Brier₆ | rounds |
 |---|---|---|---|---|---|---|
 | 1 | baseline-climatology | 0.0 | 0.97 | 0.382 | 0.030 | 107 |
-| 2 | baseline-zeros | -1.2 | 0.99 | 0.494 | 0.032 | 110 |
-| 3 | baseline-gfs | -25.3 | 0.79 | – | – | 110 |
-| 4 | baseline-openmeteo | -33.8 | 0.86 | – | – | 110 |
-| 5 | baseline-persistence | -204.7 | 1.47 | – | – | 110 |
+| 2 | baseline-zeros | -1.3 | 0.98 | 0.489 | 0.032 | 111 |
+| 3 | baseline-gfs | -24.8 | 0.78 | – | – | 111 |
+| 4 | baseline-openmeteo | -34.2 | 0.86 | – | – | 111 |
+| 5 | baseline-persistence | -202.9 | 1.45 | – | – | 111 |
 | None | southern-league-mogger | 51.7 | 0.38 | 0.152 | 0.000 | 1 |
 
 ### observers — not entered yet
 
 | # | team | Powder Accuracy | MAE | pinball | Brier₆ | rounds |
 |---|---|---|---|---|---|---|
-| 1 | baseline-gem | 17.7 | 0.18 | – | – | 5 |
-| 2 | baseline-ukmo | 16.6 | 0.19 | – | – | 5 |
-| 3 | baseline-consensus | 16.6 | 0.19 | – | – | 5 |
-| 4 | baseline-icon | 16.5 | 0.19 | – | – | 5 |
-| 5 | baseline-gfs | 10.2 | 0.20 | – | – | 5 |
-| 6 | baseline-zeros | 0.8 | 0.24 | 0.120 | 0.000 | 5 |
+| 1 | baseline-ukmo | 18.3 | 0.17 | – | – | 6 |
+| 2 | baseline-icon | 16.4 | 0.17 | – | – | 6 |
+| 3 | baseline-consensus | 14.2 | 0.17 | – | – | 6 |
+| 4 | baseline-gem | 7.9 | 0.17 | – | – | 6 |
+| 5 | baseline-zeros | 1.5 | 0.21 | 0.108 | 0.000 | 6 |
+| 6 | baseline-gfs | -9.3 | 0.20 | – | – | 6 |
 
-### resorts — **#None** of 17 (Powder Accuracy -1173.8, 1 rounds, not yet ranked)
-
-| # | team | Powder Accuracy | MAE | pinball | Brier₆ | rounds |
-|---|---|---|---|---|---|---|
-| 1 | baseline-icon | 1.8 | 0.21 | – | – | 7 |
-| 2 | baseline-zeros | 1.5 | 4.49 | 2.245 | 0.131 | 108 |
-| 3 | baseline-climatology | 0.0 | 4.60 | 2.084 | 0.130 | 104 |
-| 4 | baseline-openmeteo | -12.1 | 3.85 | – | – | 108 |
-| 5 | baseline-ecmwf | -16.2 | 0.32 | – | – | 5 |
-| 6 | baseline-gfs | -16.9 | 3.74 | – | – | 108 |
-| None | **open-powder-ensemble** | -1173.8 | 0.27 | 0.215 | 0.052 | 1 |
-
-### stations — **#None** of 16 (Powder Accuracy 50.4, 2 rounds, not yet ranked)
+### resorts — **#None** of 17 (Powder Accuracy -4159.3, 2 rounds, not yet ranked)
 
 | # | team | Powder Accuracy | MAE | pinball | Brier₆ | rounds |
 |---|---|---|---|---|---|---|
-| 1 | open-powder-ml | 34.0 | 0.72 | 0.281 | 0.025 | 5 |
-| 2 | baseline-wpc | 30.0 | 0.76 | 0.291 | 0.023 | 5 |
-| 3 | baseline-consensus | 24.4 | 0.70 | – | – | 7 |
-| 4 | house-blend | 21.2 | 0.86 | 0.447 | 0.041 | 5 |
-| 5 | baseline-ukmo | 20.6 | 0.77 | – | – | 8 |
+| 1 | baseline-icon | 14.1 | 0.19 | – | – | 8 |
+| 2 | baseline-zeros | 2.4 | 4.45 | 2.225 | 0.130 | 109 |
+| 3 | baseline-climatology | 0.0 | 4.55 | 2.064 | 0.129 | 105 |
+| 4 | baseline-gfs | -37.9 | 3.71 | – | – | 109 |
+| 5 | baseline-openmeteo | -42.4 | 3.82 | – | – | 109 |
+| 6 | baseline-persistence | -109.3 | 4.07 | – | – | 109 |
+| None | **open-powder-ensemble** | -4159.3 | 0.91 | 0.384 | 0.074 | 2 |
+
+### stations — **#None** of 16 (Powder Accuracy 44.6, 3 rounds, not yet ranked)
+
+| # | team | Powder Accuracy | MAE | pinball | Brier₆ | rounds |
+|---|---|---|---|---|---|---|
+| 1 | open-powder-ml | 30.1 | 0.77 | 0.299 | 0.021 | 6 |
+| 2 | baseline-wpc | 26.5 | 0.77 | 0.303 | 0.019 | 6 |
+| 3 | baseline-consensus | 23.1 | 0.74 | – | – | 8 |
+| 4 | baseline-ukmo | 20.6 | 0.78 | – | – | 9 |
+| 5 | house-blend | 20.4 | 0.88 | 0.441 | 0.034 | 6 |
 | 6 | baseline-ecmwf | 15.5 | 0.84 | – | – | 5 |
-| None | **open-powder-ensemble** | 50.4 | 0.72 | 0.253 | 0.023 | 2 |
+| None | **open-powder-ensemble** | 44.6 | 0.73 | 0.275 | 0.015 | 3 |
 
 <!-- scoreboard:end -->
 
