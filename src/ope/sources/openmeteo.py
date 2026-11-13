@@ -148,7 +148,8 @@ def _frame(res: dict, station_id: str, models: tuple[str, ...], leads: tuple[int
             suf = f"_previous_day{k}" if k else ""
             # a single-model request returns unsuffixed names
             cols = {v: h.get(f"{v}{suf}_{m}") if len(models) > 1 else h.get(f"{v}{suf}") for v in variables}
-            if cols["precipitation"] is None or all(x is None for x in cols["precipitation"]):
+            first = cols[variables[0]]  # precipitation, or snowfall for a snowfall-only harvest
+            if first is None or all(x is None for x in first):
                 continue
             f = pd.DataFrame({"time": t, **{v: cols.get(v) or [None] * len(t) for v in VARS}})
             f["model"], f["lead"] = m, k

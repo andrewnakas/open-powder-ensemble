@@ -54,6 +54,7 @@ class Result:
     df: pd.DataFrame  # the submission
     raw: pd.DataFrame  # per row: raw_in (model), model_in (after online bias), final, tier
     info: dict
+    X: pd.DataFrame | None = None  # what the model saw, featured rows (see save_features)
 
 
 def live_ensembles(r: Round, st: pd.DataFrame, info: dict) -> pd.DataFrame:
@@ -208,7 +209,24 @@ def build(r: Round, network: bool = True, budget: float | None = None) -> Result
         featured_coverage=round(df[df.station_id.isin(fe)].shape[0] / max(1, 3 * len(fe)), 3),
         tiers=raw["tier"].value_counts().to_dict(),
     )
-    return Result(df=df, raw=raw, info=info)
+    return Result(df=df, raw=raw, info=info, X=X[X["station_id"].isin(fe)].reset_index(drop=True))
+
+
+def save_features(res: Result, path: Path, reason: str = "") -> None:
+    """The feature rows behind a submission (featured stations), so a round
+    can be re-predicted and compared with what the archives say the same
+    forecast looked like. One file per round, replaced by each later pass like
+    the history CSV; the pass and the model runs used are stored in it."""
+    if res.X is None or res.X.empty:
+        return
+    X = res.X.copy()
+    num = X.select_dtypes("number").columns.difference(["horizon_h"])
+    X[num] = X[num].astype("float32").round(4)
+    meta = {"pass_reason": reason, "built_utc": pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%dT%H:%MZ"),
+            **{k: v for k, v in res.info.items() if k.endswith("_init")}}
+    X = pd.concat([X, pd.DataFrame(meta, index=X.index)], axis=1)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    X.to_parquet(path, index=False, compression="zstd")
 
 
 def sanitize(pred: pd.DataFrame) -> pd.DataFrame:
