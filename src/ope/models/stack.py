@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 
 from .. import QCOLS, ROOT, pb_checkout
+from ..contract import stations
 from ..truth import resolved_rounds
 
 HISTORY = ROOT / "history"
@@ -44,19 +45,32 @@ def _baselines(league: str, d: date) -> dict[str, pd.DataFrame]:
     return out
 
 
+def _featured(league: str) -> set[str]:
+    st = stations(league)
+    return set(st.index[st["featured"]])
+
+
 def fit(league: str, before: date) -> dict | None:
     tr = resolved_rounds(league)
     tr = tr[tr["round_date"] < before]
+    # the headline board is scored on the featured stations, so that is where
+    # the partner and the weight are chosen (network rows outnumber them 7:1)
+    feat = _featured(league)
+    if feat:
+        tr = tr[tr["station_id"].isin(feat)]
     rows = []
     for d in sorted(tr["round_date"].unique())[-LOOKBACK:]:
         h = HISTORY / league / f"{d.isoformat()}.csv"
         if not h.exists():
             continue
         ours = pd.read_csv(h)
-        if "model_in" not in ours:
+        if "raw_in" not in ours:
             continue
         t = tr[tr["round_date"] == d].set_index(["station_id", "horizon_h"])["truth_in"]
-        o = ours.set_index(["station_id", "horizon_h"])["model_in"]
+        # the model's own output, before the online layer: that layer's early
+        # version scaled five stations rounds by 4x, and a weight learned from
+        # those rows would describe that bug, not the model
+        o = ours.set_index(["station_id", "horizon_h"])["raw_in"]
         for name, b in _baselines(league, d).items():
             j = pd.concat([o.rename("ours"), b["snowfall_in"].rename("base"), t.rename("truth")], axis=1).dropna()
             if len(j):
