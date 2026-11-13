@@ -17,7 +17,7 @@ baseline this entry builds on.
 ## Standing
 
 <!-- scoreboard:start -->
-_Updated 2026-11-12 02:44 UTC from PowderBench leaderboards._
+_Updated 2026-11-13 02:16 UTC from PowderBench leaderboards._
 
 ### alps — **#2** of 15 (Powder Accuracy -15.7, 6 rounds)
 
