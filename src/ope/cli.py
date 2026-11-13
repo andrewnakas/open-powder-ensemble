@@ -138,7 +138,7 @@ def backfill(
     """Harvest the next ensemble-archive units from dynamical.org (resumable)."""
     from . import ens_backfill, store
 
-    store.pull("ens-store", ens_backfill.ENS_STORE)
+    store.pull_ens(ens_backfill.ENS_STORE)
     res = ens_backfill.run(league or ["stations", "observers", "alps", "era5", "resorts"], minutes, datasets=dataset)
     _summary(f"ens backfill: {res}")
 
@@ -156,7 +156,7 @@ def train(
     from .ens_backfill import ENS_STORE
     from .models import gbm
 
-    store.pull("ens-store", ENS_STORE)
+    store.pull_ens(ENS_STORE)
     store.pull("store", store.STORE, repo=store.DET_REPO)  # deterministic archive features (public)
     store.pull("models", store.MODELS)
     leagues = NH_LEAGUES if bundle == "nh" else (bundle,)
@@ -165,6 +165,10 @@ def train(
         _summary(f"train {bundle}: no training data yet")
         return
     df = pd.concat(tables, ignore_index=True)
+    del tables
+    # half the memory: LightGBM bins the features anyway, so float32 loses nothing
+    f64 = [c for c in df.select_dtypes("float64").columns if c != "truth_in"]
+    df[f64] = df[f64].astype("float32")
     if bundle == "nh":  # never silently train without the snowpack state again
         st = df[df["league"] == "stations"]
         cov = st["sp_depth"].notna().mean() if "sp_depth" in st and len(st) else 0.0
@@ -172,8 +176,8 @@ def train(
     path = store.MODELS / f"{bundle}.pkl"
     old = gbm.Bundle.load(path) if path.exists() else None
     b = gbm.fit(df, champion_params=getattr(old, "params", None) if old else None)
-    _summary(f"train {bundle}: {len(df)} rows, seasons {sorted(df.season.unique())}, "
-             f"{len(b.features)} features, rounds {b.rounds}")
+    _summary(f"train {bundle}: {len(df)} rows, seasons {sorted(int(s) for s in df.season.unique())}, "
+             f"{len(b.features)} features, rounds {b.rounds}, peak memory {_peak_gb():.1f} GB")
     _summary("held-out: " + json.dumps({k: v for k, v in b.metrics.items() if k not in ("ref_snow_p99", "cv")}))
     if b.metrics.get("cv"):
         _summary("season CV (Powder Accuracy; raw ensemble+model consensus as the baseline): " + "; ".join(
@@ -189,6 +193,14 @@ def train(
         (store.MODELS / f"{bundle}.json").write_text(json.dumps(b.metrics, indent=1, default=str))
         if promote:
             store.push("models", [path, store.MODELS / f"{bundle}.json"])
+
+
+def _peak_gb() -> float:
+    import resource
+    import sys
+
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss  # kilobytes on Linux, bytes on macOS
+    return peak / (1e9 if sys.platform == "darwin" else 1e6)
 
 
 def _better(new: dict, old: dict) -> bool:

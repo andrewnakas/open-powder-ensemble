@@ -3,7 +3,7 @@
 A unit = (dataset, league, month). It holds the featured stations' ensemble
 features for every 2nd 00Z run of the month (every run would read ~2x the
 data from dynamical.org for little extra skill). Finished units are parquet
-files in work/ens_store, synced to the `ens-store` release, and a run stops
+files in work/ens_store, synced to the `ens-store*` releases (see store.py), and a run stops
 cleanly at its time budget, so daily jobs simply continue where the last
 stopped.
 """
@@ -87,7 +87,7 @@ def run(leagues: list[str], minutes: float = 300, end: date | None = None,
         datasets: list[str] | None = None) -> dict:
     end = end or (pd.Timestamp.utcnow() - pd.Timedelta(days=5)).date()
     deadline = time.time() + minutes * 60
-    have = {p.name for p in ENS_STORE.glob("*.parquet")} | store.remote_assets("ens-store")
+    have = {p.name for p in ENS_STORE.glob("*.parquet")} | store.ens_remote_assets()
     todo = [u for u in units(leagues, end) if unit_name(*u) not in have and (not datasets or u[0] in datasets)]
     print(f"ens backfill: {len(todo)} units to go, {minutes:.0f} min budget", flush=True)
     done = []
@@ -103,8 +103,8 @@ def run(leagues: list[str], minutes: float = 300, end: date | None = None,
         done.append(p)
         print(f"  {p.name}: {len(df)} rows in {time.time() - t0:.0f}s", flush=True)
         if len(done) % 10 == 0:  # don't lose work if the job dies (fewer, bigger uploads: API limits)
-            store.push("ens-store", done[-10:])
-    store.push("ens-store", done[-(len(done) % 10 or 10):] if done else [])
+            store.push_ens(done[-10:])
+    store.push_ens(done[-(len(done) % 10 or 10):] if done else [])
     return {"done": len(done), "remaining": len(todo) - len(done)}
 
 

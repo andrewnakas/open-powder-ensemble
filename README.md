@@ -116,7 +116,7 @@ The submission machinery is the same as open-powder-ml.
 
 **`backfill.yml`:** harvests the ensemble archive.
 - It runs one parallel job per league, time-boxed and resumable.
-- Finished units go to the `ens-store` release.
+- Finished units go to the `ens-store` releases: the original one plus one per year (`ens-store-2026`, ...), because GitHub caps a release at 1000 files.
 
 **`train.yml`:** retrains daily.
 - It trains on the ensemble archive plus open-powder-ml's public deterministic feature store, with

@@ -1,6 +1,6 @@
 # Harvest the ensemble archive (GEFS 2020-, ECMWF ENS 2024-) from
 # dynamical.org for training: one job per league, each time-boxed and
-# resumable (finished units are assets of the `ens-store` release). The
+# resumable (finished units are assets of the `ens-store*` releases). The
 # keeper dispatches this daily; cron is a backup.
 name: Backfill ensemble archive
 

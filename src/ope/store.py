@@ -54,6 +54,49 @@ def remote_assets(tag: str) -> set[str]:
     return set(r.stdout.split()) if r.returncode == 0 else set()
 
 
+# GitHub allows 1000 assets per release, and the ensemble archive outgrew
+# that (the uploads then failed with HTTP 422 and the harvest stopped). So it
+# is a family of releases: the original `ens-store` plus one per calendar
+# year of unit month, `ens-store-2026` etc. (a few hundred units a year).
+ENS_TAG = "ens-store"
+
+
+def ens_tag(name: str) -> str:
+    """The release a unit file belongs in: `...__2026-10.parquet` -> `ens-store-2026`."""
+    return f"{ENS_TAG}-{name.removesuffix('.parquet').rsplit('__', 1)[-1][:4]}"
+
+
+def ens_tags() -> list[str]:
+    """Every release of the family that exists, the original first."""
+    repo = _repo()
+    if not repo:
+        return []
+    r = _gh("release", "list", "-R", repo, "-L", "200", "--json", "tagName", "-q", ".[].tagName")
+    if r.returncode != 0:
+        raise RuntimeError(f"could not list releases: {r.stderr[:300]}")
+    return sorted(t for t in r.stdout.split() if t == ENS_TAG or t.startswith(ENS_TAG + "-"))
+
+
+def ens_remote_assets() -> set[str]:
+    return set().union(*(remote_assets(t) for t in ens_tags()))
+
+
+def pull_ens(dest: Path) -> None:
+    for tag in ens_tags():
+        pull(tag, dest)
+
+
+def push_ens(files: list[Path]) -> None:
+    """Upload unit files, each to its year's release. A unit already in the
+    original release is replaced there, so no unit ever lives in two places."""
+    legacy = remote_assets(ENS_TAG) if files else set()
+    by_tag: dict[str, list[Path]] = {}
+    for f in files:
+        by_tag.setdefault(ENS_TAG if f.name in legacy else ens_tag(f.name), []).append(f)
+    for tag, fs in by_tag.items():
+        push(tag, fs)
+
+
 def pull(tag: str, dest: Path, pattern: str = "*", repo: str | None = None, overwrite: bool = True) -> None:
     """Download a release's assets. One API call lists them; the files come
     from the public github.com/.../releases/download/ links, which don't
