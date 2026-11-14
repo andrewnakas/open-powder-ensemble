@@ -81,6 +81,9 @@ def _without(model: str):
 VARIANTS = {
     "w_feat2": _w_featured(2.0),
     "w_feat4": _w_featured(4.0),
+    "w_feat8": _w_featured(8.0),
+    "w_feat16": _w_featured(16.0),
+    "w_feat1": _w_featured(1.0),
     "w_recent": _w_recent,
     "resid": lambda df: {"resid": True},
     "seedbag": lambda df: {"seeds": 3},
@@ -89,7 +92,9 @@ VARIANTS = {
     "p_lr02": lambda df: {"params": {"learning_rate": 0.02}},
     "p_ff5": lambda df: {"params": {"feature_fraction": 0.5}},
     "p_l255": lambda df: {"params": {"num_leaves": 255, "min_child_samples": 150}},
-    "f_days": lambda df: {"extra": ("cons_slr_d", "cons_prcp_d")},
+    "no_days": lambda df: {"drop": ("cons_slr_d", "cons_prcp_d")},  # adopted 2026-11-14 (+1.15 CV in ope)
+    "f_dayphys": lambda df: {"extra": ("cons_swe_d", "cons_twet_d")},
+    "f_dayspread": lambda df: {"extra": ("sd_slr_d", "max_slr_d")},
     "f_spread": lambda df: {"extra": ("q25_slr", "q75_slr")},
     "f_tmin": lambda df: {"extra": ("cons_tmin",)},
     "f_all": lambda df: {"extra": gbm.EXPERIMENTAL},
