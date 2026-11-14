@@ -99,6 +99,15 @@ def live_deterministic(r: Round, st: pd.DataFrame, info: dict) -> pd.DataFrame:
     return daily(h)
 
 
+def trained_models(dly: pd.DataFrame, bundle: gbm.Bundle) -> pd.DataFrame:
+    """The live daily rows of the deterministic models the bundle has columns
+    for (all of them if it has none)."""
+    trained = {f.split("__", 1)[1] for f in bundle.features if f.startswith("slr__")}
+    if not trained or dly is None or dly.empty:
+        return dly
+    return dly[dly["model"].isin(trained)]
+
+
 CAP_MULT, CAP_ADD = 2.5, 0.5  # physical plausibility: never far above the snowiest model
 
 
@@ -189,7 +198,15 @@ def build(r: Round, network: bool = True, budget: float | None = None) -> Result
 
     t0 = fallback.predict_ens(X)
     t0["tier"] = "t0"
-    parts = [_tier1(X, proxy, bundle)] if bundle is not None and len(ens) else []
+    parts = []
+    if bundle is not None and len(ens):
+        # Tier 1 sees only the deterministic models it was trained on: the
+        # live-only AIFS run otherwise shifts cons_*, nmod and ref_snow away
+        # from anything in the training table. Tier 0 and the cap keep it.
+        X1, sub = X, trained_models(dly, bundle)
+        if len(sub) != len(dly):
+            X1 = assemble(ens, det_rows(sub, r.league, live_round=r.round_date), r.league)
+        parts = [_tier1(X1, proxy, bundle)]
     pred = pd.concat([*parts, t0], ignore_index=True).drop_duplicates(["station_id", "horizon_h"], keep="first")
     tops = [c for c in X.columns if c.endswith(("_snow_q90", "_snow_mean", "_native_snow"))
             or c.startswith(("slr__", "snow__"))]
@@ -209,7 +226,8 @@ def build(r: Round, network: bool = True, budget: float | None = None) -> Result
         featured_coverage=round(df[df.station_id.isin(fe)].shape[0] / max(1, 3 * len(fe)), 3),
         tiers=raw["tier"].value_counts().to_dict(),
     )
-    return Result(df=df, raw=raw, info=info, X=X[X["station_id"].isin(fe)].reset_index(drop=True))
+    seen = X1 if parts else X  # what the model saw
+    return Result(df=df, raw=raw, info=info, X=seen[seen["station_id"].isin(fe)].reset_index(drop=True))
 
 
 def save_features(res: Result, path: Path, reason: str = "") -> None:

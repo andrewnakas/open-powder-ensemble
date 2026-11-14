@@ -196,6 +196,42 @@ def train(
             store.push("models", [path, store.MODELS / f"{bundle}.json"])
 
 
+@app.command()
+def experiment(
+    bundle: str = typer.Option("nh", help="nh (stations+observers+alps), era5, resorts or resorts-na"),
+    variants: str = typer.Option("", help="Comma-separated names from models/experiments.py (empty: list them)"),
+):
+    """Season CV of the champion's settings against named variants, same folds
+    and rows. Reads the stores, writes no model."""
+    import pandas as pd
+
+    from . import NH_LEAGUES, store
+    from .dataset import training_table
+    from .ens_backfill import ENS_STORE
+    from .models import experiments, gbm
+
+    names = [v.strip() for v in variants.split(",") if v.strip()]
+    if not names:
+        print("variants: " + ", ".join(experiments.VARIANTS))
+        return
+    store.pull_ens(ENS_STORE)
+    store.pull("store", store.STORE, repo=store.DET_REPO)
+    store.pull("models", store.MODELS)
+    leagues = NH_LEAGUES if bundle == "nh" else (bundle,)
+    tables = [t for t in (training_table(lg) for lg in leagues) if len(t)]
+    if not tables:
+        _summary(f"experiment {bundle}: no training data yet")
+        return
+    df = pd.concat(tables, ignore_index=True)
+    del tables
+    f64 = [c for c in df.select_dtypes("float64").columns if c != "truth_in"]
+    df[f64] = df[f64].astype("float32")
+    path = store.MODELS / f"{bundle}.pkl"
+    old = gbm.Bundle.load(path) if path.exists() else None
+    _summary(experiments.run(df, names, getattr(old, "params", None) or gbm.PARAMS))
+    _summary(f"peak memory {_peak_gb():.1f} GB")
+
+
 def _peak_gb() -> float:
     import resource
     import sys
