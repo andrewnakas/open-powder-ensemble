@@ -18,7 +18,7 @@ env:
 jobs:
   train:
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 340  # nh takes ~3 h on a normal runner; a slow one ran past 240 on 11-15
     strategy:
       fail-fast: false
       matrix:
