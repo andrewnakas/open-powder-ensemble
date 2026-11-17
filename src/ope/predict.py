@@ -178,6 +178,25 @@ def _tier1(X: pd.DataFrame, as_league: str, bundle: gbm.Bundle) -> pd.DataFrame:
     return t1
 
 
+def _with_gfsx(X: pd.DataFrame, r: Round, st: pd.DataFrame, bundle, info: dict) -> pd.DataFrame:
+    """Hourly-GFS timing features for this round (gfsx.py), only when the
+    bundle uses them. A failure costs the columns (NaN), never the round."""
+    if not any(f.startswith("gfsx_") for f in bundle.features):
+        return X
+    from . import gfsx
+
+    try:
+        gx = gfsx.for_round(r.cutoff, st, r.round_date)
+        info["gfsx_rows"] = len(gx)
+    except Exception as e:
+        info["gfsx_error"] = f"{type(e).__name__}: {e}"[:200]
+        return X
+    if gx.empty:
+        return X
+    X = X.drop(columns=[c for c in gfsx.COLS if c in X])
+    return X.merge(gx, on=["station_id", "horizon_h"], how="left")
+
+
 def build(r: Round, network: bool = True, budget: float | None = None) -> Result:
     reg = stations(r.league)
     ids = [s for s in (r.stations if network else r.featured) if s in reg.index]
@@ -206,6 +225,7 @@ def build(r: Round, network: bool = True, budget: float | None = None) -> Result
         X1, sub = X, trained_models(dly, bundle)
         if len(sub) != len(dly):
             X1 = assemble(ens, det_rows(sub, r.league, live_round=r.round_date), r.league)
+        X1 = _with_gfsx(X1, r, reg.loc[ids], bundle, info)
         parts = [_tier1(X1, proxy, bundle)]
     pred = pd.concat([*parts, t0], ignore_index=True).drop_duplicates(["station_id", "horizon_h"], keep="first")
     tops = [c for c in X.columns if c.endswith(("_snow_q90", "_snow_mean", "_native_snow"))

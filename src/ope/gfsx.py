@@ -7,7 +7,7 @@ apart. One hourly GFS run (dynamical.org archive, no quota) can.
 
 Ported from deep-powder (src/dpow/nbhd.py there), where these six columns
 added 1.5 CV points on this entry's own table, and open-powder-ml (+1.55,
-24 h +4.0, 2026-11-17). Here: experiment variant `gfsx` first.
+24 h +4.0, 2026-11-17). Here: +1.74 season CV (43.05 -> 44.79, 24 h 32.2 -> 36.0, every fold and league up).
 
 - Training: the harvested features come from deep-powder's public `nbhd`
   release (files gfsx2__<league>__<season>.parquet; its daily pipeline keeps

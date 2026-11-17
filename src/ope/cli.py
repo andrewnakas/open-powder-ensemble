@@ -166,6 +166,10 @@ def train(
         _summary(f"train {bundle}: no training data yet")
         return
     df = pd.concat(tables, ignore_index=True)
+    if bundle == "nh":  # hourly-GFS timing features (gfsx.py), harvested by deep-powder
+        from . import gfsx
+
+        df = gfsx.join(df)
     del tables
     # half the memory: LightGBM bins the features anyway, so float32 loses nothing
     f64 = [c for c in df.select_dtypes("float64").columns if c != "truth_in"]
@@ -223,6 +227,10 @@ def experiment(
         _summary(f"experiment {bundle}: no training data yet")
         return
     df = pd.concat(tables, ignore_index=True)
+    if bundle == "nh":  # hourly-GFS timing features (gfsx.py), harvested by deep-powder
+        from . import gfsx
+
+        df = gfsx.join(df)
     del tables
     f64 = [c for c in df.select_dtypes("float64").columns if c != "truth_in"]
     df[f64] = df[f64].astype("float32")

@@ -78,14 +78,8 @@ def _without(model: str):
     return f
 
 
-def _gfsx(df):
-    from .. import gfsx
-
-    return {"df": gfsx.join(df)}
-
-
 VARIANTS = {
-    "gfsx": _gfsx,
+    # "gfsx" (hourly-GFS timing, +1.74 CV, 24 h +3.8) adopted 2026-11-17: now in every nh table (gfsx.py)
     "w_feat2": _w_featured(2.0),
     "w_feat4": _w_featured(4.0),
     "w_feat8": _w_featured(8.0),
