@@ -78,7 +78,14 @@ def _without(model: str):
     return f
 
 
+def _gfsx(df):
+    from .. import gfsx
+
+    return {"df": gfsx.join(df)}
+
+
 VARIANTS = {
+    "gfsx": _gfsx,
     "w_feat2": _w_featured(2.0),
     "w_feat4": _w_featured(4.0),
     "w_feat8": _w_featured(8.0),
