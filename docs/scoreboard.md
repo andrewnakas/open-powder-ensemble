@@ -1,4 +1,4 @@
-_Updated 2026-11-16 01:22 UTC from PowderBench leaderboards._
+_Updated 2026-11-17 04:10 UTC from PowderBench leaderboards._
 
 ### alps — **#10** of 15 (Powder Accuracy -15.8, 10 rounds)
 
