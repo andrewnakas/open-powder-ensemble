@@ -80,6 +80,7 @@ def _without(model: str):
 
 VARIANTS = {
     # "gfsx" (hourly-GFS timing, +1.74 CV, 24 h +3.8) adopted 2026-11-17: now in every nh table (gfsx.py)
+    "wndx": lambda df: {"df": __import__("ope.wndx", fromlist=["join"]).join(df)},  # storm wind (deep-powder +0.52)
     "w_feat2": _w_featured(2.0),
     "w_feat4": _w_featured(4.0),
     "w_feat8": _w_featured(8.0),
