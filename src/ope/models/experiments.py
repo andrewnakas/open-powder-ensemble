@@ -79,8 +79,7 @@ def _without(model: str):
 
 
 VARIANTS = {
-    "edges": lambda df: {"extra": ("gfsx_pre6", "gfsx_pre24", "gfsx_post12", "gfsx_first6", "gfsx_last6",
-                                   "gfsx_last24")},  # deep-powder +0.72
+    # "edges" (gfsx pre6/pre24/post12/first6/last6/last24): -0.32 CV here on 2026-11-18 (deep-powder +0.72); not adopted
     # "gfsx" (hourly-GFS timing, +1.74 CV, 24 h +3.8) adopted 2026-11-17: now in every nh table (gfsx.py)
     # "wndx" (storm wind + moisture, wndx.py): +0.18 CV here on 2026-11-18 (+0.52 in deep-powder and opm), not adopted
     "w_feat2": _w_featured(2.0),
