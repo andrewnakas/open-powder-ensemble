@@ -1,16 +1,16 @@
-_Updated 2026-11-26 03:57 UTC from PowderBench leaderboards._
+_Updated 2026-11-27 03:54 UTC from PowderBench leaderboards._
 
-### alps — **#15** of 16 (Powder Accuracy -13.9, 20 rounds)
+### alps — **#15** of 16 (Powder Accuracy -10.5, 21 rounds)
 
 | # | team | Powder Accuracy | MAE | pinball | Brier₆ | rounds |
 |---|---|---|---|---|---|---|
-| 1 | deep-powder | 53.7 | 2.00 | 0.685 | 0.040 | 5 |
-| 2 | baseline-ukmo | 21.5 | 1.40 | – | – | 11 |
-| 3 | baseline-consensus | 20.4 | 1.29 | – | – | 11 |
-| 4 | baseline-openmeteo | 19.7 | 1.23 | – | – | 11 |
-| 5 | baseline-icon | 18.8 | 1.24 | – | – | 11 |
-| 6 | house-blend | 16.2 | 1.26 | 0.566 | 0.035 | 11 |
-| 15 | **open-powder-ensemble** | -13.9 | 1.00 | 0.364 | 0.018 | 20 |
+| 1 | deep-powder | 53.1 | 2.28 | 0.775 | 0.062 | 6 |
+| 2 | baseline-ukmo | 22.2 | 1.71 | – | – | 12 |
+| 3 | baseline-consensus | 21.9 | 1.56 | – | – | 12 |
+| 4 | baseline-openmeteo | 21.7 | 1.47 | – | – | 12 |
+| 5 | baseline-icon | 20.8 | 1.48 | – | – | 12 |
+| 6 | house-blend | 18.4 | 1.51 | 0.681 | 0.054 | 12 |
+| 15 | **open-powder-ensemble** | -10.5 | 1.10 | 0.401 | 0.023 | 21 |
 
 ### era5 — **#None** of 17 (Powder Accuracy 48.8, 4 rounds, not yet ranked)
 
@@ -24,11 +24,11 @@ _Updated 2026-11-26 03:57 UTC from PowderBench leaderboards._
 | 6 | baseline-climatology | 0.0 | 0.92 | 0.362 | 0.029 | 114 |
 | None | **open-powder-ensemble** | 48.8 | 0.03 | 0.016 | 0.000 | 4 |
 
-### observers — **#1** of 20 (Powder Accuracy 40.6, 24 rounds)
+### observers — **#1** of 20 (Powder Accuracy 42.8, 25 rounds)
 
 | # | team | Powder Accuracy | MAE | pinball | Brier₆ | rounds |
 |---|---|---|---|---|---|---|
-| 1 | **open-powder-ensemble** | 40.6 | 0.17 | 0.066 | 0.002 | 24 |
+| 1 | **open-powder-ensemble** | 42.8 | 0.17 | 0.066 | 0.002 | 25 |
 | 2 | baseline-consensus | 29.5 | 0.16 | – | – | 26 |
 | 3 | baseline-icon | 24.6 | 0.19 | – | – | 26 |
 | 4 | baseline-ukmo | 23.8 | 0.15 | – | – | 26 |
@@ -47,26 +47,26 @@ _Updated 2026-11-26 03:57 UTC from PowderBench leaderboards._
 | 6 | baseline-persistence | -113.5 | 4.00 | – | – | 111 |
 | None | **open-powder-ensemble** | -5240.6 | 1.09 | 0.398 | 0.061 | 4 |
 
-### resorts-na — **#8** of 18 (Powder Accuracy 6.0, 21 rounds)
+### resorts-na — **#8** of 18 (Powder Accuracy 6.6, 22 rounds)
 
 | # | team | Powder Accuracy | MAE | pinball | Brier₆ | rounds |
 |---|---|---|---|---|---|---|
-| 1 | deep-powder | 29.3 | 1.98 | 0.806 | 0.072 | 5 |
-| 2 | baseline-ecmwf | 28.9 | 1.25 | – | – | 9 |
-| 3 | baseline-icon | 21.7 | 1.49 | – | – | 14 |
-| 4 | baseline-wpc | 19.4 | 1.41 | 0.627 | 0.043 | 14 |
-| 5 | baseline-aifs | 17.9 | 1.54 | – | – | 14 |
-| 6 | baseline-zeros | 16.5 | 1.74 | 0.870 | 0.059 | 15 |
-| 8 | **open-powder-ensemble** | 6.0 | 1.59 | 0.676 | 0.049 | 21 |
+| 1 | baseline-ecmwf | 28.9 | 1.25 | – | – | 9 |
+| 2 | deep-powder | 27.4 | 1.86 | 0.752 | 0.078 | 6 |
+| 3 | baseline-icon | 21.7 | 1.47 | – | – | 15 |
+| 4 | baseline-wpc | 17.5 | 1.43 | 0.630 | 0.048 | 15 |
+| 5 | baseline-aifs | 17.3 | 1.53 | – | – | 15 |
+| 6 | baseline-zeros | 15.6 | 1.73 | 0.863 | 0.062 | 16 |
+| 8 | **open-powder-ensemble** | 6.6 | 1.57 | 0.668 | 0.052 | 22 |
 
-### stations — **#13** of 19 (Powder Accuracy 15.3, 27 rounds)
+### stations — **#13** of 19 (Powder Accuracy 15.8, 28 rounds)
 
 | # | team | Powder Accuracy | MAE | pinball | Brier₆ | rounds |
 |---|---|---|---|---|---|---|
-| 1 | deep-powder | 46.7 | 1.27 | 0.444 | 0.038 | 6 |
-| 2 | house-analog | 38.8 | 1.11 | 0.406 | 0.024 | 14 |
-| 3 | house-gbm | 36.2 | 1.01 | 0.387 | 0.021 | 14 |
-| 4 | baseline-consensus | 36.1 | 0.88 | – | – | 29 |
-| 5 | house-blend | 33.4 | 0.86 | 0.388 | 0.024 | 27 |
+| 1 | deep-powder | 46.4 | 1.16 | 0.409 | 0.035 | 7 |
+| 2 | house-analog | 36.9 | 1.09 | 0.397 | 0.024 | 15 |
+| 3 | baseline-consensus | 35.4 | 0.88 | – | – | 30 |
+| 4 | house-gbm | 35.0 | 0.99 | 0.379 | 0.020 | 15 |
+| 5 | house-blend | 32.9 | 0.86 | 0.384 | 0.024 | 28 |
 | 6 | baseline-ecmwf | 31.2 | 0.93 | – | – | 16 |
-| 13 | **open-powder-ensemble** | 15.3 | 1.27 | 0.459 | 0.023 | 27 |
+| 13 | **open-powder-ensemble** | 15.8 | 1.25 | 0.451 | 0.023 | 28 |
